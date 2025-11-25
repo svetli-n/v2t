@@ -11,3 +11,8 @@ dependencies = [
     "sounddevice>=0.5.3",
     "soundfile>=0.13.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.17.0",
+]
