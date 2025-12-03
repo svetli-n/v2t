@@ -14,7 +14,7 @@ A macOS application that captures microphone input, transcribes speech using a l
 ### Quick Start with Launcher
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/svetli-n/v2t
 cd v2t
 
 # Install dependencies
