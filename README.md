@@ -55,6 +55,23 @@ The app requires the following macOS permissions:
    - Go to **System Settings** > **Privacy & Security** > **Accessibility**
    - Add/Enable your Terminal app (e.g., iTerm, Terminal, VS Code)
 
+## Configuration
+
+You can configure the Whisper model using the `V2T_MODEL` environment variable:
+
+```bash
+# Use a different model size
+V2T_MODEL=tiny.en ./start.sh
+V2T_MODEL=medium.en ./start.sh
+
+# Or use a custom model path
+V2T_MODEL=/path/to/your/model.bin ./start.sh
+```
+
+Available model sizes: `tiny.en`, `base.en`, `small.en` (default), `medium.en`, `large`
+
+Smaller models are faster but less accurate. Larger models are more accurate but slower.
+
 ## Usage
 
 1. Launch the app.

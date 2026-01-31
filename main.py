@@ -70,6 +70,7 @@ class VoiceToTextApp:
 
     def run(self):
         print("Voice-to-Text App Running...")
+        print(f"Model: {self.transcriber.get_model_name()}")
         print(f"Audio input: {self.recorder.get_input_device_info()}")
         print("Press Right Command to toggle recording (Start/Stop).")
         print("Press Ctrl+C to exit.")
