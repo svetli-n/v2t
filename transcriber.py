@@ -17,10 +17,10 @@ class AudioTranscriber:
 
         if os.path.exists(model_path):
             print(f"Loading Whisper model from '{model_path}'...", flush=True)
-            self.model = Model(model_path, print_realtime=False, print_progress=False)
+            self.model = Model(model_path, print_realtime=False, print_progress=False, redirect_whispercpp_logs_to=None)
         else:
             print(f"Downloading Whisper model '{self.model_name}'...", flush=True)
-            self.model = Model(self.model_name, print_realtime=False, print_progress=False)
+            self.model = Model(self.model_name, print_realtime=False, print_progress=False, redirect_whispercpp_logs_to=None)
 
         print("Model loaded.", flush=True)
 
