@@ -5,9 +5,11 @@ A macOS application that captures microphone input, transcribes speech using a l
 ## Features
 
 - **Hotkey Control**: Press **Right Command** to toggle recording (Start/Stop)
-- **Local Transcription**: Uses `pywhispercpp` with the `small.en` model for high-accuracy offline speech-to-text.
-- **Automatic Text Injection**: Types transcribed text directly into any focused text field using AppleScript (macOS native).
-- **Privacy-First**: All processing happens locally on your Mac.
+- **Audio Feedback**: Distinct tones when recording starts/stops
+- **Local Transcription**: Uses `pywhispercpp` with configurable Whisper models for offline speech-to-text
+- **Automatic Text Injection**: Types transcribed text directly into any focused text field using AppleScript (macOS native)
+- **Privacy-First**: All processing happens locally on your Mac
+- **Startup Info**: Shows selected audio input device and model on launch
 
 ## Installation
 
@@ -68,9 +70,18 @@ V2T_MODEL=medium.en ./start.sh
 V2T_MODEL=/path/to/your/model.bin ./start.sh
 ```
 
-Available model sizes: `tiny.en`, `base.en`, `small.en` (default), `medium.en`, `large`
+Available models:
 
-Smaller models are faster but less accurate. Larger models are more accurate but slower.
+| Model | Size | Speed | Best for |
+|-------|------|-------|----------|
+| `tiny.en` | 39M | Fastest | Quick drafts, low latency |
+| `base.en` | 74M | Fast | Good balance for English |
+| `small.en` | 244M | Moderate | **Default** - accurate English |
+| `medium.en` | 769M | Slow | High accuracy English |
+| `large-v3` | 1.5G | Slowest | Multilingual, accents |
+| `large-v3-turbo` | 1.5G | Slow | Faster large model |
+
+The `.en` models are English-only but faster and more accurate for English speech.
 
 ## Usage
 
