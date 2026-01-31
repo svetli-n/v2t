@@ -65,9 +65,17 @@ You can configure the Whisper model using the `V2T_MODEL` environment variable:
 # Use a different model size
 V2T_MODEL=tiny.en ./start.sh
 V2T_MODEL=medium.en ./start.sh
+V2T_MODEL=large-v3-turbo ./start.sh
 
 # Or use a custom model path
 V2T_MODEL=/path/to/your/model.bin ./start.sh
+
+# With uv run directly
+V2T_MODEL=large-v3 uv run python ./main.py
+
+# Export for the session
+export V2T_MODEL=medium.en
+./start.sh
 ```
 
 Available models:
