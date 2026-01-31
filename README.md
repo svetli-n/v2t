@@ -43,9 +43,9 @@ A macOS application that captures microphone input, transcribes speech using a l
    ```bash
    # Using the launcher
    ./start.sh
-   
-   # OR directly with uv
-   uv run python main.py
+
+   # OR directly with uv (from the project directory)
+   uv run python ./main.py
    ```
 
 ## Permissions
