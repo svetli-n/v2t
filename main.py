@@ -21,19 +21,13 @@ class VoiceToTextApp:
 
     def on_press(self, key):
         if key in self.HOTKEY:
-            # Toggle logic
-            if self.is_recording:
-                self.stop_recording_and_transcribe()
-            else:
+            if not self.is_recording:
                 self.start_recording()
 
     def on_release(self, key):
-        # No action on release for toggle mode
-        
-        if key == keyboard.Key.esc:
-            # Optional: Exit app on ESC? Or maybe just keep running.
-            # Let's keep running, but maybe print a message.
-            pass
+        if key in self.HOTKEY:
+            if self.is_recording:
+                self.stop_recording_and_transcribe()
 
     def start_recording(self):
         print("Hotkey pressed! Starting recording...", flush=True)
@@ -72,7 +66,7 @@ class VoiceToTextApp:
         print("Voice-to-Text App Running...")
         print(f"Model: {self.transcriber.get_model_name()}")
         print(f"Audio input: {self.recorder.get_input_device_info()}")
-        print("Press Right Command to toggle recording (Start/Stop).")
+        print("Hold Right Command to record, release to transcribe.")
         print("Press Ctrl+C to exit.")
         
         with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as listener:
