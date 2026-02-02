@@ -16,8 +16,8 @@ from config import SOUND_TYPE
 # Registry of available sound providers
 # Maps V2T_SOUND value -> module name
 SOUND_PROVIDERS = {
-    "files": "files",
-    "generated": "generated",
+    "bloop": "bloop",
+    "warm": "warm",
     "simple": "simple",
     "click": "click",
 }
@@ -25,7 +25,7 @@ SOUND_PROVIDERS = {
 
 def _get_provider():
     """Load the sound provider module based on config."""
-    module_name = SOUND_PROVIDERS.get(SOUND_TYPE, "files")
+    module_name = SOUND_PROVIDERS.get(SOUND_TYPE, "bloop")
     return import_module(f".{module_name}", package=__name__)
 
 
