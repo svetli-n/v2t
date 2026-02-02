@@ -91,6 +91,31 @@ Available models:
 
 The `.en` models are English-only but faster and more accurate for English speech.
 
+### Sound Type
+
+You can configure the audio feedback sounds using the `V2T_SOUND` environment variable:
+
+```bash
+# Use wav files (default)
+./start.sh
+
+# Use warm bloop tones with harmonics
+V2T_SOUND=generated ./start.sh
+
+# Use simple sine wave tones (880Hz/440Hz)
+V2T_SOUND=simple ./start.sh
+
+# Use short click sounds
+V2T_SOUND=click ./start.sh
+```
+
+| Value | Description |
+|-------|-------------|
+| `files` | Wav files from `assets/sounds/` (default) |
+| `generated` | Warm bloop tones with harmonics |
+| `simple` | Simple sine wave tones |
+| `click` | Short click sounds |
+
 ## Usage
 
 1. Launch the app.
