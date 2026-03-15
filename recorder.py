@@ -38,7 +38,6 @@ class AudioRecorder:
             callback=self._callback
         )
         self.stream.start()
-        print("Recording started...", flush=True)
 
     def stop(self):
         """Stop recording and return the audio data."""
@@ -50,8 +49,6 @@ class AudioRecorder:
             self.stream.stop()
             self.stream.close()
             self.stream = None
-        
-        print("Recording stopped.", flush=True)
         
         # Collect all data from the queue
         data = []

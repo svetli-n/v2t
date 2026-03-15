@@ -15,8 +15,6 @@ if pgrep -f "python.*main.py" > /dev/null; then
 fi
 
 echo "🎙️  Starting Voice-to-Text..."
-echo "Press Right Command to toggle recording (Start/Stop)"
-echo "Press Ctrl+C to quit"
 echo ""
 
 uv run python main.py

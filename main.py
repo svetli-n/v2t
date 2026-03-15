@@ -1,3 +1,4 @@
+from datetime import datetime
 from pynput import keyboard
 import numpy as np
 import threading
@@ -48,48 +49,42 @@ class VoiceToTextApp:
                 self.stop_recording_and_transcribe()
 
     def start_recording(self):
-        print("Hotkey pressed! Starting recording...", flush=True)
         play_start_sound()
         self.is_recording = True
         self.recorder.start()
+        print("\r🔴 Recording...          ", end="", flush=True)
 
     def stop_recording_and_transcribe(self):
-        print("Hotkey released! Stopping recording...", flush=True)
         play_stop_sound()
         self.is_recording = False
         audio_data = self.recorder.stop()
 
         if len(audio_data) == 0:
-            print("No audio recorded.", flush=True)
+            print("\r⚠️  No audio recorded.    ", flush=True)
             return
 
-        print("Transcribing...", flush=True)
-        # Run transcription in a separate thread to not block the listener?
-        # Actually, we want to block or at least process it.
-        # Since we are in the listener callback, we should be careful not to block it for too long if we want to detect other keys.
-        # But for this simple app, blocking the listener might be okay, or we can offload to a thread.
-        # Let's offload to a thread to keep the UI/Hotkey responsive.
+        print("\r⏳ Transcribing...       ", end="", flush=True)
         threading.Thread(target=self._process_audio, args=(audio_data,), daemon=True).start()
 
     def _process_audio(self, audio_data):
         try:
             text = self.transcriber.transcribe(audio_data)
-            print(f"Transcribed: '{text}'", flush=True)
-            if text:
+            ts = datetime.now().strftime("%H:%M:%S")
+            if text and text != "[BLANK_AUDIO]":
+                print(f"\r[{ts}] {text}", flush=True)
                 self.injector.type_text(text)
+            else:
+                print(f"\r[{ts}] ⚠️  No speech detected.", flush=True)
         except Exception as e:
-            print(f"Error during processing: {e}", flush=True)
+            print(f"\r❌ Error: {e}", flush=True)
 
     def run(self):
-        print("Voice-to-Text App Running...")
-        print(f"Model: {self.transcriber.get_model_name()}")
-        print(f"Audio input: {self.recorder.get_input_device_info()}")
-        print(f"Mode: {self.mode}")
+        print(f"Model: {self.transcriber.get_model_name()} | Audio: {self.recorder.get_input_device_info()} | Mode: {self.mode}")
         if self.mode == "toggle":
-            print("Press Right Command to toggle recording (Start/Stop).")
+            print("Press Right Command to toggle recording. Ctrl+C to quit.")
         else:
-            print("Hold Right Command to record, release to transcribe.")
-        print("Press Ctrl+C to exit.")
+            print("Hold Right Command to record. Ctrl+C to quit.")
+        print()
 
         listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
         listener.start()
@@ -111,4 +106,4 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
     app.run()
-    print("Exiting...")
+    print("\nBye!")
