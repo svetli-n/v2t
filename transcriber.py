@@ -8,6 +8,14 @@ class AudioTranscriber:
         self.model_name = config.MODEL
         project_root = os.path.dirname(os.path.abspath(__file__))
 
+        # Determine language setting
+        # .en models are English-only and don't support language parameter
+        is_english_only = self.model_name.endswith(".en")
+        lang = config.LANGUAGE
+        language = "en" if is_english_only else ("" if lang == "auto" else lang)
+
+        model_kwargs = dict(print_realtime=False, print_progress=False, redirect_whispercpp_logs_to=None, language=language)
+
         # Check if MODEL is a full path to a file
         if os.path.isfile(self.model_name):
             model_path = self.model_name
@@ -17,10 +25,10 @@ class AudioTranscriber:
 
         if os.path.exists(model_path):
             print(f"Loading Whisper model from '{model_path}'...", flush=True)
-            self.model = Model(model_path, print_realtime=False, print_progress=False, redirect_whispercpp_logs_to=None)
+            self.model = Model(model_path, **model_kwargs)
         else:
             print(f"Downloading Whisper model '{self.model_name}'...", flush=True)
-            self.model = Model(self.model_name, print_realtime=False, print_progress=False, redirect_whispercpp_logs_to=None)
+            self.model = Model(self.model_name, **model_kwargs)
 
         print("Model loaded.", flush=True)
 
