@@ -1,7 +1,25 @@
+from contextlib import contextmanager
 from pywhispercpp.model import Model
 import numpy as np
 import os
+import sys
 import config
+
+
+@contextmanager
+def _suppress_stderr():
+    """Suppress C-level stderr output by redirecting fd 2 to devnull."""
+    stderr_fd = sys.stderr.fileno()
+    saved_fd = os.dup(stderr_fd)
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    os.dup2(devnull, stderr_fd)
+    os.close(devnull)
+    try:
+        yield
+    finally:
+        os.dup2(saved_fd, stderr_fd)
+        os.close(saved_fd)
+
 
 class AudioTranscriber:
     def __init__(self):
@@ -21,6 +39,12 @@ class AudioTranscriber:
         else:
             print(f"Downloading Whisper model '{self.model_name}'...", flush=True)
             self.model = Model(self.model_name, print_realtime=False, print_progress=False, redirect_whispercpp_logs_to=None)
+
+        if self.model._ctx is None:
+            raise RuntimeError(
+                f"Failed to load Whisper model '{self.model_name}'. "
+                "The model file may be corrupted — try deleting it and restarting."
+            )
 
         print("Model loaded.", flush=True)
 
@@ -55,7 +79,8 @@ class AudioTranscriber:
 
         # pywhispercpp transcribe returns a list of segments
         try:
-            segments = self.model.transcribe(audio_data)
+            with _suppress_stderr():
+                segments = self.model.transcribe(audio_data)
             text = []
             for segment in segments:
                 text.append(segment.text)
