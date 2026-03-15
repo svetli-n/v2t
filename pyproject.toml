@@ -13,6 +13,12 @@ dependencies = [
     "torch>=2.9.1",
 ]
 
+[project.optional-dependencies]
+gui = [
+    "PySide6>=6.7.0",
+    "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
+]
+
 [dependency-groups]
 dev = [
     "pyinstaller>=6.17.0",
