@@ -97,6 +97,113 @@ class TestVoiceToTextAppInit:
 
         assert app.mode == "toggle"
 
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_init_overlay_disabled_by_default(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that GUI overlay is disabled by default."""
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+
+        assert app.overlay is None
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_init_hotkey_down_set(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that hotkey_down is initialized as empty set."""
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+
+        assert app.hotkey_down == set()
+
+
+class TestHotkeyMatching:
+    """Tests for _is_hotkey and _key_id methods."""
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_is_hotkey_matches_cmd_r(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that _is_hotkey matches keyboard.Key.cmd_r."""
+        from main import VoiceToTextApp
+        from pynput import keyboard
+
+        app = VoiceToTextApp()
+
+        assert app._is_hotkey(keyboard.Key.cmd_r) is True
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_is_hotkey_rejects_other_keys(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that _is_hotkey rejects non-hotkey keys."""
+        from main import VoiceToTextApp
+        from pynput import keyboard
+
+        app = VoiceToTextApp()
+
+        assert app._is_hotkey(keyboard.Key.space) is False
+        assert app._is_hotkey(keyboard.Key.cmd_l) is False
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_is_hotkey_matches_vk_54(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that _is_hotkey matches virtual key code 54 (Right Command)."""
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+
+        mock_key = MagicMock()
+        mock_key.value.vk = 54
+        # Not in HOTKEY set directly
+        app.HOTKEY = set()
+
+        assert app._is_hotkey(mock_key) is True
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_is_hotkey_rejects_other_vk(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that _is_hotkey rejects keys with non-54 vk."""
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+
+        mock_key = MagicMock()
+        mock_key.value.vk = 55
+        app.HOTKEY = set()
+
+        assert app._is_hotkey(mock_key) is False
+
+
+class TestDuplicatePressFiltering:
+    """Tests for duplicate press callback filtering."""
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    @patch('main.play_start_sound')
+    def test_duplicate_press_ignored(self, mock_play_start, mock_injector, mock_transcriber, mock_recorder):
+        """Test that duplicate press callbacks are ignored."""
+        from main import VoiceToTextApp
+        from pynput import keyboard
+
+        app = VoiceToTextApp()
+
+        app.on_press(keyboard.Key.cmd_r)
+        assert app.is_recording is True
+        assert mock_play_start.call_count == 1
+
+        # Simulate duplicate press callback (OS sends repeated events)
+        app.on_press(keyboard.Key.cmd_r)
+        # Should not toggle back — duplicate ignored
+        assert app.is_recording is True
+        assert mock_play_start.call_count == 1
+
 
 class TestVoiceToTextAppShutdown:
     """Tests for the shutdown mechanism."""
@@ -314,6 +421,9 @@ class TestToggleModeHotkeyHandling:
         app.on_press(keyboard.Key.cmd_r)
         assert app.is_recording is True
 
+        # Release first so hotkey_down is cleared
+        app.on_release(keyboard.Key.cmd_r)
+
         app.on_press(keyboard.Key.cmd_r)
         assert app.is_recording is False
 
@@ -499,6 +609,7 @@ class TestProcessAudio:
 
         app = VoiceToTextApp()
         app.transcriber.transcribe.return_value = "hello world"
+        app._begin_transcription()
 
         audio_data = np.array([0.1, 0.2, 0.3])
         app._process_audio(audio_data)
@@ -515,6 +626,7 @@ class TestProcessAudio:
 
         app = VoiceToTextApp()
         app.transcriber.transcribe.return_value = ""
+        app._begin_transcription()
 
         audio_data = np.array([0.1, 0.2, 0.3])
         app._process_audio(audio_data)
@@ -530,6 +642,7 @@ class TestProcessAudio:
 
         app = VoiceToTextApp()
         app.transcriber.transcribe.side_effect = Exception("Test error")
+        app._begin_transcription()
 
         audio_data = np.array([0.1, 0.2, 0.3])
         app._process_audio(audio_data)
@@ -557,6 +670,107 @@ class TestProcessAudio:
             mock_thread.assert_called_once()
             call_kwargs = mock_thread.call_args
             assert call_kwargs.kwargs.get('daemon') is True
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_process_audio_decrements_transcription_count(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that _process_audio decrements active transcription count."""
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+        app.transcriber.transcribe.return_value = "hello"
+        app._begin_transcription()
+        assert app._active_transcriptions == 1
+
+        app._process_audio(np.array([0.1]))
+
+        assert app._active_transcriptions == 0
+
+
+class TestEnvFlag:
+    """Tests for _env_flag helper."""
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_env_flag_returns_default_when_unset(self, mock_injector, mock_transcriber, mock_recorder):
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+        assert app._env_flag("V2T_NONEXISTENT", default=True) is True
+        assert app._env_flag("V2T_NONEXISTENT", default=False) is False
+
+    @patch.dict(os.environ, {"V2T_TEST_FLAG": "0"})
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_env_flag_zero_is_false(self, mock_injector, mock_transcriber, mock_recorder):
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+        assert app._env_flag("V2T_TEST_FLAG", default=True) is False
+
+    @patch.dict(os.environ, {"V2T_TEST_FLAG": "1"})
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_env_flag_one_is_true(self, mock_injector, mock_transcriber, mock_recorder):
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+        assert app._env_flag("V2T_TEST_FLAG", default=False) is True
+
+    @patch.dict(os.environ, {"V2T_TEST_FLAG": "false"})
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_env_flag_false_string(self, mock_injector, mock_transcriber, mock_recorder):
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+        assert app._env_flag("V2T_TEST_FLAG", default=True) is False
+
+
+class TestOverlayIntegration:
+    """Tests for GUI overlay integration."""
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_overlay_disabled_by_default(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that overlay is None when V2T_GUI is not set."""
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+
+        assert app.overlay is None
+
+    @patch.dict(os.environ, {"V2T_GUI": "1"})
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_overlay_graceful_fallback_on_import_error(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that overlay falls back gracefully if PySide6 not installed."""
+        from main import VoiceToTextApp
+
+        with patch.dict('sys.modules', {'gui_overlay': None}):
+            app = VoiceToTextApp()
+            assert app.overlay is None
+
+    @patch('main.AudioRecorder')
+    @patch('main.AudioTranscriber')
+    @patch('main.TextInjector')
+    def test_set_overlay_state_noop_without_overlay(self, mock_injector, mock_transcriber, mock_recorder):
+        """Test that _set_overlay_state is a no-op when overlay is None."""
+        from main import VoiceToTextApp
+
+        app = VoiceToTextApp()
+        assert app.overlay is None
+
+        # Should not raise
+        app._set_overlay_state("recording")
+        app._set_overlay_state("idle")
 
 
 class TestSignalHandler:

@@ -19,6 +19,21 @@ class AudioRecorder:
         except Exception as e:
             return f"Unknown (error: {e})"
 
+    def get_current_level(self):
+        """Return a 0-1 RMS level from the most recent audio block."""
+        try:
+            # Peek at the last item without removing it
+            if self.q.empty() or not self.recording:
+                return 0.0
+            items = list(self.q.queue)
+            if not items:
+                return 0.0
+            last = items[-1]
+            rms = float(np.sqrt(np.mean(last ** 2)))
+            return min(1.0, rms * 10.0)
+        except Exception:
+            return 0.0
+
     def _callback(self, indata, frames, time, status):
         """This is called (from a separate thread) for each audio block."""
         if status:
